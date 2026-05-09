@@ -21,7 +21,7 @@ export default function AdminPage() {
   useEffect(() => { fetchCats(); fetchNews(); loadSettings(); }, []);
 
   const loadSettings = async () => {
-    const { data } = await supabase.from('site_settings').eq('section_id', 'global_config').single();
+    const { data } = await supabase.from('site_settings').select('*').eq('section_id', 'global_config').single();
     if (data) {
         setSiteSettings({
             name: data.site_name, phone: data.phone_no, email: data.email_id,
