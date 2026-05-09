@@ -51,7 +51,7 @@ export default function Home() {
         </button>
       </nav>
 
-      {/* Marquee (Multiple) */}
+      {/* Marquee */}
       {global?.marquee_data && Array.isArray(global.marquee_data) && global.marquee_data.map((m: any, i: number) => (
         m.text && <marquee key={i} style={{ background: i % 2 === 0 ? '#000' : '#b91c1c', color: '#fff', padding: '5px', display: 'block' }}>{m.text}</marquee>
       ))}
@@ -89,16 +89,44 @@ export default function Home() {
         <p>© 2026 {global?.site_name || 'Basti Jyoti'}</p>
       </footer>
 
-      {/* News Modal */}
+      {/* News Modal with Video & Audio Support */}
       {selectedNews && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.85)', zIndex: 100, display: 'flex', justifyContent: 'center', padding: '15px' }}>
           <div style={{ background: '#fff', width: '100%', maxWidth: '750px', maxHeight: '90vh', borderRadius: '20px', overflowY: 'auto', padding: '25px', position: 'relative' }}>
-            <button onClick={() => setSelectedNews(null)} style={{ position: 'absolute', top: '15px', right: '20px', fontSize: '1.8rem', border: 'none', background: 'none', cursor: 'pointer' }}>×</button>
-            <div style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '15px' }}>
+            <button onClick={() => setSelectedNews(null)} style={{ position: 'absolute', top: '15px', right: '20px', fontSize: '2.5rem', border: 'none', background: 'none', cursor: 'pointer', zIndex: 10 }}>×</button>
+            
+            {/* Image Slider */}
+            <div style={{ display: 'flex', overflowX: 'auto', gap: '10px', marginBottom: '15px', paddingBottom: '10px' }}>
+              <img src={selectedNews.image_url} style={{ height: '250px', borderRadius: '10px' }} />
               {selectedNews.images?.map((img:string, i:number) => <img key={i} src={img} style={{ height: '250px', borderRadius: '10px' }} />)}
             </div>
-            <h2>{lang === 'hi' ? selectedNews.title_hi : (selectedNews.title_en || selectedNews.title_hi)}</h2>
-            <p style={{ whiteSpace: 'pre-wrap', fontSize: '1.1rem', lineHeight: '1.6' }}>{lang === 'hi' ? selectedNews.content_hi : (selectedNews.content_en || selectedNews.content_hi)}</p>
+
+            {/* Video Player (If YouTube ID exists) */}
+            {selectedNews.video_url && (
+              <div style={{ marginBottom: '20px', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                <iframe
+                  width="100%"
+                  height="350"
+                  src={`https://www.youtube.com/embed/${selectedNews.video_url}`}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                ></iframe>
+              </div>
+            )}
+
+            {/* Audio Player (If Audio Link exists) */}
+            {selectedNews.audio_url && (
+              <div style={{ background: '#f1f1f1', padding: '15px', borderRadius: '12px', marginBottom: '20px', borderLeft: '5px solid #b91c1c' }}>
+                <p style={{ margin: '0 0 10px 0', fontWeight: 'bold' }}>🎧 सुन्निये ये खबर (Listen to this news):</p>
+                <audio controls src={selectedNews.audio_url} style={{ width: '100%' }} />
+              </div>
+            )}
+
+            <span style={{ color: '#b91c1c', fontWeight: 'bold' }}>{selectedNews.category}</span>
+            <h2 style={{ marginTop: '10px' }}>{lang === 'hi' ? selectedNews.title_hi : (selectedNews.title_en || selectedNews.title_hi)}</h2>
+            <p style={{ whiteSpace: 'pre-wrap', fontSize: '1.1rem', lineHeight: '1.6', color: '#333' }}>{lang === 'hi' ? selectedNews.content_hi : (selectedNews.content_en || selectedNews.content_hi)}</p>
           </div>
         </div>
       )}
