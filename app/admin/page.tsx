@@ -9,6 +9,7 @@ export default function AdminPage() {
   const [newsList, setNewsList] = useState<any[]>([]);
   const [newCat, setNewCat] = useState('');
   const [marqueeList, setMarqueeList] = useState([{ text: '' }]);
+  const [editingId, setEditingId] = useState<string | null>(null); // Naya: Edit track karne ke liye
   const [siteSettings, setSiteSettings] = useState({ 
     name: 'BASTI JYOTI', phone: '', email: '', address: '', extraImg: '', adCode: '', bg: '' 
   });
@@ -37,7 +38,7 @@ export default function AdminPage() {
   };
 
   const fetchNews = async () => {
-    const { data } = await supabase.from('news').select('id, title_hi, category').order('created_at', { ascending: false });
+    const { data } = await supabase.from('news').select('*').order('created_at', { ascending: false });
     if (data) setNewsList(data);
   };
 
@@ -53,6 +54,17 @@ export default function AdminPage() {
     if(confirm("Delete News?")) { await supabase.from('news').delete().eq('id', id); fetchNews(); }
   };
 
+  const startEdit = (n: any) => {
+    setEditingId(n.id);
+    setForm({
+      title_hi: n.title_hi || '', title_en: n.title_en || '',
+      content_hi: n.content_hi || '', content_en: n.content_en || '',
+      category: n.category || '', image_url: n.image_url || '',
+      images: n.images || [], video_url: n.video_url || '', audio_url: n.audio_url || ''
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const saveGlobal = async () => {
     await supabase.from('site_settings').upsert({ 
       section_id: 'global_config', site_name: siteSettings.name, phone_no: siteSettings.phone,
@@ -63,8 +75,15 @@ export default function AdminPage() {
   };
 
   const handlePost = async () => {
-    const { error } = await supabase.from('news').insert([form]);
-    if(!error) { alert("Published! 🚀"); fetchNews(); }
+    if (editingId) {
+      const { error } = await supabase.from('news').update(form).eq('id', editingId);
+      if(!error) { alert("Updated Successfully! ✅"); setEditingId(null); }
+    } else {
+      const { error } = await supabase.from('news').insert([form]);
+      if(!error) alert("Published! 🚀");
+    }
+    setForm({ title_hi: '', title_en: '', content_hi: '', content_en: '', category: '', image_url: '', images: [], video_url: '', audio_url: '' });
+    fetchNews();
   };
 
   const inputS = { padding: '12px', borderRadius: '10px', border: '1px solid #ccc', width: '100%', marginBottom: '10px' };
@@ -75,39 +94,44 @@ export default function AdminPage() {
       
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
         
-        {/* LEFT: News Editor & Delete News */}
         <div>
           <div style={{ background: '#fff', padding: '20px', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)', marginBottom: '20px' }}>
-            <h3>📰 Create News (Hindi + English)</h3>
-            <select style={inputS} onChange={e => setForm({...form, category: e.target.value})}>
+            <h3>{editingId ? "📝 Edit News" : "📰 Create News (Hindi + English)"}</h3>
+            <select style={inputS} value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
               <option>Select Category</option>
               {cats.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
             </select>
-            <input style={inputS} placeholder="Hindi Title" onChange={e => setForm({...form, title_hi: e.target.value})} />
-            <textarea style={{...inputS, height: '80px'}} placeholder="Hindi Content" onChange={e => setForm({...form, content_hi: e.target.value})} />
-            <input style={inputS} placeholder="English Title" onChange={e => setForm({...form, title_en: e.target.value})} />
-            <textarea style={{...inputS, height: '80px'}} placeholder="English Content" onChange={e => setForm({...form, content_en: e.target.value})} />
-            <input style={inputS} placeholder="Main Thumbnail URL" onChange={e => setForm({...form, image_url: e.target.value})} />
-            <input style={inputS} placeholder="Slider Images (comma separated)" onChange={e => setForm({...form, images: e.target.value.split(',').map(s=>s.trim())})} />
-            <input style={inputS} placeholder="YouTube Video ID" onChange={e => setForm({...form, video_url: e.target.value})} />
-            <input style={inputS} placeholder="Audio MP3 Link" onChange={e => setForm({...form, audio_url: e.target.value})} />
-            <button onClick={handlePost} style={{ width: '100%', background: '#b91c1c', color: '#fff', padding: '15px', borderRadius: '10px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>PUBLISH NEWS 🚀</button>
+            <input style={inputS} value={form.title_hi} placeholder="Hindi Title" onChange={e => setForm({...form, title_hi: e.target.value})} />
+            <textarea style={{...inputS, height: '80px'}} value={form.content_hi} placeholder="Hindi Content" onChange={e => setForm({...form, content_hi: e.target.value})} />
+            <input style={inputS} value={form.title_en} placeholder="English Title" onChange={e => setForm({...form, title_en: e.target.value})} />
+            <textarea style={{...inputS, height: '80px'}} value={form.content_en} placeholder="English Content" onChange={e => setForm({...form, content_en: e.target.value})} />
+            <input style={inputS} value={form.image_url} placeholder="Main Thumbnail URL" onChange={e => setForm({...form, image_url: e.target.value})} />
+            <input style={inputS} value={form.images.join(', ')} placeholder="Slider Images (comma separated)" onChange={e => setForm({...form, images: e.target.value.split(',').map(s=>s.trim())})} />
+            <input style={inputS} value={form.video_url} placeholder="YouTube Video ID" onChange={e => setForm({...form, video_url: e.target.value})} />
+            <input style={inputS} value={form.audio_url} placeholder="Audio MP3 Link" onChange={e => setForm({...form, audio_url: e.target.value})} />
+            
+            <button onClick={handlePost} style={{ width: '100%', background: editingId ? '#2563eb' : '#b91c1c', color: '#fff', padding: '15px', borderRadius: '10px', fontWeight: 'bold', border: 'none', cursor: 'pointer' }}>
+                {editingId ? "UPDATE NEWS 🔄" : "PUBLISH NEWS 🚀"}
+            </button>
+            {editingId && <button onClick={() => {setEditingId(null); setForm({title_hi:'', title_en:'', content_hi:'', content_en:'', category:'', image_url:'', images:[], video_url:'', audio_url:''})}} style={{ marginTop: '10px', width: '100%', background: '#666', color: '#fff', padding: '10px', borderRadius: '10px', border: 'none', cursor: 'pointer' }}>Cancel Edit</button>}
           </div>
 
           <div style={{ background: '#fff', padding: '20px', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
-            <h3>🗑️ Delete News</h3>
+            <h3>🗑️ Manage News</h3>
             <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
               {newsList.map(n => (
                 <div key={n.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px', borderBottom: '1px solid #eee' }}>
-                  <span><b>[{n.category}]</b> {n.title_hi.substring(0,40)}...</span>
-                  <button onClick={() => deleteNews(n.id)} style={{ color: 'red', cursor: 'pointer' }}>Delete</button>
+                  <span><b>[{n.category}]</b> {n.title_hi?.substring(0,40)}...</span>
+                  <div>
+                    <button onClick={() => startEdit(n)} style={{ color: 'blue', cursor: 'pointer', marginRight: '10px', border: 'none', background: 'none' }}>Edit</button>
+                    <button onClick={() => deleteNews(n.id)} style={{ color: 'red', cursor: 'pointer', border: 'none', background: 'none' }}>Delete</button>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* RIGHT: Global Settings & Categories */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div style={{ background: '#fff', padding: '20px', borderRadius: '15px', boxShadow: '0 5px 15px rgba(0,0,0,0.1)' }}>
             <h3>🛠️ Global Settings (Ads & Site Name)</h3>
