@@ -54,17 +54,22 @@ export default function AdminPage() {
     if(confirm("Delete News?")) { await supabase.from('news').delete().eq('id', id); fetchNews(); }
   };
 
-  const startEdit = (n: any) => {
-    setEditingId(n.id);
-    setForm({
-      title_hi: n.title_hi || '', title_en: n.title_en || '',
-      content_hi: n.content_hi || '', content_en: n.content_en || '',
-      category: n.category || '', image_url: n.image_url || '',
-      images: n.images || [], video_url: n.video_url || '', audio_url: n.audio_url || ''
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
+ const startEdit = (n: any) => {
+      setEditingId(n.id);
+      setForm({
+        title_hi: n.title_hi || '', 
+        title_en: n.title_en || '',
+        content_hi: n.content_hi || '', 
+        content_en: n.content_en || '',
+        category: n.category || '', 
+        image_url: n.image_url || '',
+        images: n.images || [], 
+        video_url: n.video_url || '', 
+        audio_url: n.audio_url || ''
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+  
   const saveGlobal = async () => {
     await supabase.from('site_settings').upsert({ 
       section_id: 'global_config', site_name: siteSettings.name, phone_no: siteSettings.phone,
